@@ -39,7 +39,7 @@ public class DataToExcel {
     public void writeTableHeader(){
         currentRow = currentRow + 3;
         Row headerRow = sheet.createRow(currentRow);
-        String[] headers = {"Company", "Job title", "Location", "Contract type", "Work mode", "Missions", "Qualifications", "Link"};
+        String[] headers = {"Company", "Job title", "Location", "Contract type", "Work mode", "Publish date", "Missions", "Qualifications", "Link"};
         for(int i=0; i<headers.length; i++){
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
@@ -99,6 +99,9 @@ public class DataToExcel {
                 finalQualifications = finalQualifications.substring(0, finalQualifications.length() - 4);
             }
 
+            /*
+            *  Creating the cells
+            * */
             for(int m=0; m<job.size(); m++){
                 Cell cell = row.createCell(m+1);
                 if(!job.get(m).isEmpty()){
@@ -109,15 +112,15 @@ public class DataToExcel {
                 cell.setCellStyle(dataCellStyle);
             }
 
-            Cell missionCell = row.createCell(5);
+            Cell missionCell = row.createCell(6);
             missionCell.setCellValue(finalMissions);
             missionCell.setCellStyle(dataCellStyle);
 
-            Cell qualificationCell = row.createCell(6);
+            Cell qualificationCell = row.createCell(7);
             qualificationCell.setCellValue(finalQualifications);
             qualificationCell.setCellStyle(dataCellStyle);
 
-            Cell linkCell = row.createCell(7);
+            Cell linkCell = row.createCell(8);
             linkCell.setCellValue(link);
             linkCell.setCellStyle(dataCellStyle);
 
@@ -166,15 +169,17 @@ public class DataToExcel {
             /*
              * Auto-size columns for better readability
              * */
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 9; i++) {
                 sheet.autoSizeColumn(i);
             }
             sheet.setColumnWidth(0, 15 * 256);
             sheet.setColumnWidth(3, 15 * 256);
             sheet.setColumnWidth(4, 50 * 256);
-            sheet.setColumnWidth(5, 50 * 256);
+            sheet.setColumnWidth(5, 20 * 256);
             sheet.setColumnWidth(6, 50 * 256);
             sheet.setColumnWidth(7, 50 * 256);
+            sheet.setColumnWidth(8, 50 * 256);
+
             workbook.write(output);
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -84,13 +84,18 @@ public class ExpleoJobCollector {
                 List<WebElement> rows = jobTable.findElements(By.className("row"));
 
                 for (WebElement row : rows) {
-                    //System.out.println("Row " + (i + 1) + ": " + rows.get(i).getText());
                     WebElement link = row.findElement(By.cssSelector("div.col-xs-12.title a.iCIMS_Anchor"));
                     WebElement job = row.findElement(By.cssSelector("div.col-xs-12.title a.iCIMS_Anchor h3"));
 
                     String jobLink = link.getAttribute("href");
                     String jobTitle = job.getText();
 
+                    /*  Here we extract the date of the job publication  */
+                    WebElement date_element = row.findElement(
+                            By.cssSelector("div.col-xs-6.header.right > span:nth-of-type(2)")
+                    );
+                    String publishDate = date_element.getText().replaceAll("\\(.*\\)", "")
+                                                               .replaceAll("\\n", "");
 
                     /*
                      * Each job bloc contains a DIV which has infos such "Location", "work mode", "contract type"
@@ -109,7 +114,6 @@ public class ExpleoJobCollector {
                         String name = dt_element.getText();
                         String value = dd_element.getText();
 
-
                         switch (name.toLowerCase().stripLeading().stripTrailing()) {
                             case "job locations":
                                 location = value;
@@ -127,6 +131,7 @@ public class ExpleoJobCollector {
                     infos.add(location);
                     infos.add(contractType);
                     infos.add(workMode);
+                    infos.add(publishDate);
 
                     id_jobInfo.put(globalIndex, infos);
                     jobsLinks.put(globalIndex, jobLink);
