@@ -18,26 +18,23 @@ public class ExpleoJobCollector {
     CompaniesLinks companiesLinks = new CompaniesLinks();
 
     private HashMap<Integer, List<String>> id_jobInfo = new HashMap<>();
-    private HashMap<Integer, StringBuilder> id_jobQualifications = new HashMap<>();
-    private HashMap<Integer, StringBuilder> id_jobMissions = new HashMap<>();
+    private final HashMap<Integer, StringBuilder> id_jobQualifications = new HashMap<>();
+    private final HashMap<Integer, StringBuilder> id_jobMissions = new HashMap<>();
 
     private final HashMap<Integer, String> jobsLinks = new HashMap<>();
 
-    public HashMap<Integer, StringBuilder> getId_jobMissions() {
-        return id_jobMissions;
+    public HashMap<Integer, String> getJobsLinks() {
+        return jobsLinks;
     }
 
-    public void setId_jobMissions(HashMap<Integer, StringBuilder> id_jobMissions) {
-        this.id_jobMissions = id_jobMissions;
+    public HashMap<Integer, StringBuilder> getId_jobMissions() {
+        return id_jobMissions;
     }
 
     public HashMap<Integer, StringBuilder> getId_jobQualifications() {
         return id_jobQualifications;
     }
 
-    public void setId_jobQualifications(HashMap<Integer, StringBuilder> id_jobQualifications) {
-        this.id_jobQualifications = id_jobQualifications;
-    }
 
     WebDriver driver = new EdgeDriver();
 
@@ -51,16 +48,16 @@ public class ExpleoJobCollector {
         this.id_jobInfo = id_jobInfo;
     }
 
-    void setUpDriver(){
+    public void setUpDriver(){
         String link = companiesLinks.expleoLink;
         driver.get(link);
     }
 
-    void closeDriver(){
+    public void closeDriver(){
         driver.quit();
     }
 
-    void getJobsInformations(){
+    public void getJobsInformations(){
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
@@ -87,14 +84,34 @@ public class ExpleoJobCollector {
 
 
                 /*
-                 * The four DIVs inside the element ".col-xs-12 additionalFields" have a repetitive structure,
-                 * for that we used the term ":nth-of-type(4)" which indicates which block number we want to get.
-                 * */
-                String location = rows.get(i).findElement(By.cssSelector("div.col-xs-12.additionalFields > dl > div.iCIMS_JobHeaderTag:nth-of-type(1) dd.iCIMS_JobHeaderData span")).getText();
-                String contractType = rows.get(i).findElement(By.cssSelector("div.col-xs-12.additionalFields > dl > div.iCIMS_JobHeaderTag:nth-of-type(3) dd.iCIMS_JobHeaderData span")).getText();
-                String workMode = rows.get(i).findElement(By.cssSelector("div.col-xs-12.additionalFields > dl > div.iCIMS_JobHeaderTag:nth-of-type(4) dd.iCIMS_JobHeaderData span")).getText();
+                * Each job bloc contains a DIV which has infos such "Location", "work mode", "contract type"
+                * We get that block which we named as "InfosDivs", after this, we iterate over its DIVs.
+                * Each DIV has two child tags <dt> and <dd>.
+                * */
 
-                /* Here we access the job link to collect the job requirements */
+                List<WebElement> InfosDivs = rows.get(i).findElements(By.cssSelector("div.col-xs-12.additionalFields dl.iCIMS_JobHeaderGroup div"));
+                String location = "";
+                String contractType = "";
+                String workMode = "";
+                for(WebElement element : InfosDivs){
+                    WebElement dt_element = element.findElement(By.tagName("dt"));
+                    WebElement dd_element = element.findElement(By.tagName("dd"));
+
+                    String name = dt_element.getText();
+                    String value = dd_element.getText();
+
+
+                    switch (name.toLowerCase().stripLeading().stripTrailing()){
+                        case "job locations" :
+                            location = value;
+                        case "type d’emploi" :
+                            contractType = value;
+                        case "lieu de travail" :
+                            workMode = value;
+                        default:
+                            break;
+                    }
+                }
 
                 List<String> infos = new ArrayList<>();
                 infos.add(jobTitle);
@@ -105,8 +122,6 @@ public class ExpleoJobCollector {
                 id_jobInfo.put(i, infos);
                 jobsLinks.put(i, jobLink);
 
-
-
             }
 
         } catch (Exception e) {
@@ -115,7 +130,7 @@ public class ExpleoJobCollector {
         }
     }
 
-    void getJobsRequirements(){
+    public void getJobsRequirements(){
         for(int i=0; i<jobsLinks.size(); i++){
             driver.get(jobsLinks.get(i));
             try {
@@ -136,7 +151,7 @@ public class ExpleoJobCollector {
                     if(!missionsList.isEmpty()){
                         for (WebElement webElement : missionsList) {
                             String s = webElement.getText();
-                            if(!s.isEmpty()){
+                            if(!s.isEmpty() && !s.contains("Le Groupe EXPLEO s’appuie sur 19000")){
                                 missionsStr.append("- ").append(webElement.getText());
                             }
                         }
@@ -145,7 +160,7 @@ public class ExpleoJobCollector {
                         if(!missionsList.isEmpty()){
                             for (WebElement webElement : missionsList) {
                                 String s = webElement.getText();
-                                if(!s.isEmpty()){
+                                if(!s.isEmpty() && !s.contains("Le Groupe EXPLEO s’appuie sur 19000")){
                                     missionsStr.append("- ").append(webElement.getText());
                                 }
                             }
@@ -153,7 +168,7 @@ public class ExpleoJobCollector {
                             missionsList = dataDiv.get(1).findElements(By.tagName("p"));
                             for (WebElement webElement : missionsList) {
                                 String s = webElement.getText();
-                                if(!s.isEmpty()){
+                                if(!s.isEmpty() && !s.contains("Le Groupe EXPLEO s’appuie sur 19000")){
                                     missionsStr.append("- ").append(webElement.getText());
                                 }
                             }
@@ -165,7 +180,7 @@ public class ExpleoJobCollector {
                     if(!qualificationsList.isEmpty()){
                         for (WebElement webElement : qualificationsList) {
                             String s = webElement.getText();
-                            if(!s.isEmpty()){
+                            if(!s.isEmpty() && !s.contains("Le Groupe EXPLEO s’appuie sur 19000")){
                                 qualificationsStr.append("- ").append(webElement.getText());
                             }
                         }
@@ -174,7 +189,7 @@ public class ExpleoJobCollector {
                         if(!qualificationsList.isEmpty()){
                             for (WebElement webElement : qualificationsList) {
                                 String s = webElement.getText();
-                                if(!s.isEmpty()){
+                                if(!s.isEmpty() && !s.contains("Le Groupe EXPLEO s’appuie sur 19000")){
                                     qualificationsStr.append("- ").append(webElement.getText());
                                 }
                             }
@@ -182,7 +197,7 @@ public class ExpleoJobCollector {
                             qualificationsList = dataDiv.get(2).findElements(By.tagName("p"));
                             for (WebElement webElement : qualificationsList) {
                                 String s = webElement.getText();
-                                if(!s.isEmpty()){
+                                if(!s.isEmpty() && !s.contains("Le Groupe EXPLEO s’appuie sur 19000")){
                                     qualificationsStr.append("- ").append(webElement.getText());
                                 }
                             }
@@ -212,21 +227,7 @@ public class ExpleoJobCollector {
     }
 
 
-    public static void main(String[] args) {
 
-        ExpleoJobCollector expleoJobCollector = new ExpleoJobCollector();
-        expleoJobCollector.setUpDriver();
-        expleoJobCollector.getJobsInformations();
-        expleoJobCollector.getJobsRequirements();
-        expleoJobCollector.closeDriver();
-
-        System.out.println(" Printing the final Data : ");
-        System.out.println(expleoJobCollector.id_jobInfo);
-        System.out.println(expleoJobCollector.jobsLinks);
-        System.out.println(expleoJobCollector.id_jobMissions);
-        System.out.println(expleoJobCollector.id_jobQualifications);
-
-    }
 
 
 }
