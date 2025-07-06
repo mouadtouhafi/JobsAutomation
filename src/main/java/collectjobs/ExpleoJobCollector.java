@@ -17,11 +17,13 @@ public class ExpleoJobCollector {
     private static final Logger logger = Logger.getLogger(ExpleoJobCollector.class.getName());
     CompaniesLinks companiesLinks = new CompaniesLinks();
 
-    private HashMap<Integer, List<String>> id_jobInfo = new HashMap<>();
+    private final HashMap<Integer, List<String>> id_jobInfo = new HashMap<>();
     private final HashMap<Integer, StringBuilder> id_jobQualifications = new HashMap<>();
     private final HashMap<Integer, StringBuilder> id_jobMissions = new HashMap<>();
 
     private final HashMap<Integer, String> jobsLinks = new HashMap<>();
+
+    private boolean isFinalPageReached = false;
 
     public HashMap<Integer, String> getJobsLinks() {
         return jobsLinks;
@@ -35,17 +37,10 @@ public class ExpleoJobCollector {
         return id_jobQualifications;
     }
 
-
     WebDriver driver = new EdgeDriver();
-
-
 
     public HashMap<Integer, List<String>> getId_jobInfo() {
         return id_jobInfo;
-    }
-
-    public void setId_jobInfo(HashMap<Integer, List<String>> id_jobInfo) {
-        this.id_jobInfo = id_jobInfo;
     }
 
     public void setUpDriver(){
@@ -60,68 +55,110 @@ public class ExpleoJobCollector {
     public void getJobsInformations(){
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-
             /*
-             * Here we wait for the 5th iframe (index 4) to be available and automatically switch into it
-             * This 4th iframe contains the dynamically loaded job listings.
-             */
-            wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(4));
-            WebElement jobTable;
-            jobTable = wait.until(
-                    ExpectedConditions.visibilityOfElementLocated(
-                            By.cssSelector("div.container-fluid.iCIMS_JobsTable")
-                    )
-            );
-            List<WebElement> rows = jobTable.findElements(By.className("row"));
+            *  The globalIndex will be used as the id for each job, because we will iterate over page
+            *  and using only the for loop index as id will not work because in each page the id will
+            *  be re-initialized.
+            *
+            *  The page count indicates simply the page number.
+            * */
+            int globalIndex = 0;
+            int pageCount = 1;
 
-            for (int i=0; i<rows.size(); i++) {
-                //System.out.println("Row " + (i + 1) + ": " + rows.get(i).getText());
-                WebElement link = rows.get(i).findElement(By.cssSelector("div.col-xs-12.title a.iCIMS_Anchor"));
-                WebElement job = rows.get(i).findElement(By.cssSelector("div.col-xs-12.title a.iCIMS_Anchor h3"));
+            while(!isFinalPageReached) {
 
-                String jobLink = link.getAttribute("href");
-                String jobTitle = job.getText();
+                logger.info("We are now processing the page number : " + pageCount++);
+                /*
+                 * Here we wait for the 5th iframe (index 4) to be available and automatically switch into it
+                 * This 4th iframe contains the dynamically loaded job listings.
+                 */
+                driver.switchTo().defaultContent();
+                wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(4));
+
+                WebElement jobTable;
+                jobTable = wait.until(
+                        ExpectedConditions.visibilityOfElementLocated(
+                                By.cssSelector("div.container-fluid.iCIMS_JobsTable")
+                        )
+                );
+                List<WebElement> rows = jobTable.findElements(By.className("row"));
+
+                for (WebElement row : rows) {
+                    //System.out.println("Row " + (i + 1) + ": " + rows.get(i).getText());
+                    WebElement link = row.findElement(By.cssSelector("div.col-xs-12.title a.iCIMS_Anchor"));
+                    WebElement job = row.findElement(By.cssSelector("div.col-xs-12.title a.iCIMS_Anchor h3"));
+
+                    String jobLink = link.getAttribute("href");
+                    String jobTitle = job.getText();
+
+
+                    /*
+                     * Each job bloc contains a DIV which has infos such "Location", "work mode", "contract type"
+                     * We get that block which we named as "InfosDivs", after this, we iterate over its DIVs.
+                     * Each DIV has two child tags <dt> and <dd>.
+                     * */
+
+                    List<WebElement> InfosDivs = row.findElements(By.cssSelector("div.col-xs-12.additionalFields dl.iCIMS_JobHeaderGroup div"));
+                    String location = "";
+                    String contractType = "";
+                    String workMode = "";
+                    for (WebElement element : InfosDivs) {
+                        WebElement dt_element = element.findElement(By.tagName("dt"));
+                        WebElement dd_element = element.findElement(By.tagName("dd"));
+
+                        String name = dt_element.getText();
+                        String value = dd_element.getText();
+
+
+                        switch (name.toLowerCase().stripLeading().stripTrailing()) {
+                            case "job locations":
+                                location = value;
+                            case "type d’emploi":
+                                contractType = value;
+                            case "lieu de travail":
+                                workMode = value;
+                            default:
+                                break;
+                        }
+                    }
+
+                    List<String> infos = new ArrayList<>();
+                    infos.add(jobTitle);
+                    infos.add(location);
+                    infos.add(contractType);
+                    infos.add(workMode);
+
+                    id_jobInfo.put(globalIndex, infos);
+                    jobsLinks.put(globalIndex, jobLink);
+                    globalIndex++;
+                }
 
 
                 /*
-                * Each job bloc contains a DIV which has infos such "Location", "work mode", "contract type"
-                * We get that block which we named as "InfosDivs", after this, we iterate over its DIVs.
-                * Each DIV has two child tags <dt> and <dd>.
-                * */
+                 *  Here in this section, we will try to find and click the nextPage button.
+                 * */
 
-                List<WebElement> InfosDivs = rows.get(i).findElements(By.cssSelector("div.col-xs-12.additionalFields dl.iCIMS_JobHeaderGroup div"));
-                String location = "";
-                String contractType = "";
-                String workMode = "";
-                for(WebElement element : InfosDivs){
-                    WebElement dt_element = element.findElement(By.tagName("dt"));
-                    WebElement dd_element = element.findElement(By.tagName("dd"));
+                try {
+                    WebElement nextButton = wait.until(ExpectedConditions.elementToBeClickable(
+                            By.cssSelector("div.iCIMS_Paging.text-center span.halflings.halflings-menu-right")
+                    ));
 
-                    String name = dt_element.getText();
-                    String value = dd_element.getText();
-
-
-                    switch (name.toLowerCase().stripLeading().stripTrailing()){
-                        case "job locations" :
-                            location = value;
-                        case "type d’emploi" :
-                            contractType = value;
-                        case "lieu de travail" :
-                            workMode = value;
-                        default:
-                            break;
+                    /*  Here we check if next button is invisible, if yes then we reached the final page.  */
+                    String classAttr = nextButton.getAttribute("class");
+                    if ((classAttr != null && classAttr.contains("invisible")) ||
+                        (classAttr != null && classAttr.contains("disabled"))) {
+                        logger.info("Reached last page");
+                        isFinalPageReached = true;
+                        break;
                     }
+                    WebElement firstRow = rows.getFirst();
+                    nextButton.click();
+
+                    wait.until(ExpectedConditions.stalenessOf(firstRow));
+                } catch (Exception e) {
+                    logger.info("No more pages available");
+                    isFinalPageReached = true;
                 }
-
-                List<String> infos = new ArrayList<>();
-                infos.add(jobTitle);
-                infos.add(location);
-                infos.add(contractType);
-                infos.add(workMode);
-
-                id_jobInfo.put(i, infos);
-                jobsLinks.put(i, jobLink);
-
             }
 
         } catch (Exception e) {
@@ -223,11 +260,5 @@ public class ExpleoJobCollector {
                 System.out.println("Error: " + e.getMessage());
             }
         }
-
     }
-
-
-
-
-
 }
