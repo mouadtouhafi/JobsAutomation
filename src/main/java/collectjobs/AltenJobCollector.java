@@ -1,5 +1,6 @@
 package collectjobs;
 
+import dataorganize.DataToExcel;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -19,10 +20,25 @@ public class AltenJobCollector {
     WebDriver driver = new EdgeDriver();
 
     private final HashMap<Integer, List<String>> id_jobInfo = new HashMap<>();
+    private final HashMap<Integer, String> jobsLinks = new HashMap<>();
     private final HashMap<Integer, StringBuilder> id_jobQualifications = new HashMap<>();
     private final HashMap<Integer, StringBuilder> id_jobMissions = new HashMap<>();
 
-    private final HashMap<Integer, String> jobsLinks = new HashMap<>();
+    public HashMap<Integer, StringBuilder> getId_jobQualifications() {
+        return id_jobQualifications;
+    }
+
+    public HashMap<Integer, StringBuilder> getId_jobMissions() {
+        return id_jobMissions;
+    }
+
+    public HashMap<Integer, String> getJobsLinks() {
+        return jobsLinks;
+    }
+
+    public HashMap<Integer, List<String>> getId_jobInfo() {
+        return id_jobInfo;
+    }
 
     public void setUpDriver(){
         String link = companiesLinks.altenLink;
@@ -108,6 +124,12 @@ public class AltenJobCollector {
                         missions.append(str).append("- ");
                     }
                     id_jobMissions.put(i, missions);
+
+                    /* Job qualification must be empty because there is no qualification section
+                    *  in Alten website.
+                    * */
+                    StringBuilder qualifications = new StringBuilder("N/A");
+                    id_jobQualifications.put(i,qualifications);
                 }
 
 
@@ -126,5 +148,14 @@ public class AltenJobCollector {
         altenJobCollector.setUpDriver();
         altenJobCollector.getJobsInformations();
         altenJobCollector.closeDriver();
+
+        DataToExcel dataToExcel = new DataToExcel();
+        dataToExcel.createWorkbook();
+        dataToExcel.applyBorderStyle();
+        dataToExcel.applyHeaderStyle();
+        dataToExcel.writeTableHeader();
+        dataToExcel.writeData("Alten", altenJobCollector.getId_jobInfo(), altenJobCollector.getJobsLinks(), altenJobCollector.getId_jobMissions(), altenJobCollector.getId_jobQualifications());
+
+        dataToExcel.saveWorkbook("C://Users//touhafi//Desktop//outputAlten.xlsx");
     }
 }
