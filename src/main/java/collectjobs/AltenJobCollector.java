@@ -55,8 +55,6 @@ public class AltenJobCollector {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         try {
-            // Handle cookie disclaimer before accessing any elements
-            dismissCookieDisclaimer();
 
             /*
              * Here, we access to the Domains block and collect the links of the
@@ -74,7 +72,6 @@ public class AltenJobCollector {
             for(WebElement element : listDomainDivs){
                 domainsLinks.add(element.getAttribute("href"));
             }
-//            System.out.println(domainsLinks);
 
 
             /*
@@ -84,16 +81,48 @@ public class AltenJobCollector {
 
             for(String link : domainsLinks){
                 driver.get(link);
-                // Dismiss cookie disclaimer on each new page
-                dismissCookieDisclaimer();
+                Thread.sleep(2000);
 
+
+                handleCookieBanner(driver, wait);
                 WebElement jobsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                        By.cssSelector("div.container-md div.wp-block-bootstrap-tabs ul.nav.tabs__nav.d-none.d-md-flex")
+                        By.cssSelector("div.container-md ul.nav.tabs__nav.d-none.d-md-flex")
                 ));
 
-                List<WebElement> listJobs = jobsSection.findElements(
-                        By.tagName("a")
-                );
+                List<WebElement> li_jobsList = jobsSection.findElements(By.tagName("li"));
+                for(WebElement li : li_jobsList){
+
+
+                    safeClick(driver, li);
+                    Thread.sleep(1000);
+                }
+
+
+
+
+
+
+
+//                WebElement jobsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
+//                        By.cssSelector("div.container-md div.tab-content")
+//                ));
+//                List<WebElement> a_elements = jobsSection.findElements(By.tagName("a"));
+//                List<WebElement> div_elements = jobsSection.findElements(By.tagName("div"));
+//                for(int i=0; i<a_elements.size(); i++){
+//
+//                    String jobTitle = "";
+//                    String hiddenJobTitle = (String) ((JavascriptExecutor) driver).executeScript(
+//                            "return arguments[0].textContent.trim();",
+//                            a_elements.get(i)
+//                    );
+//
+//                    String missions = "";
+//                    List<WebElement> li_elements = div_elements.get(i).findElements(By.tagName("li"));
+//                    for(WebElement li_element : li_elements){
+//                        missions = missions + li_element.getText();
+//                    }
+//                    System.out.println(missions);
+//                }
             }
 
         } catch (Exception e) {
@@ -101,23 +130,65 @@ public class AltenJobCollector {
         }
     }
 
-    private void dismissCookieDisclaimer() {
+    public void safeClick(WebDriver driver, WebElement element) {
         try {
-            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
-            WebElement disclaimer = shortWait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.id("tarteaucitronDisclaimerAlert")
-            ));
+            // Scroll into view and click using JS to avoid overlays
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+            Thread.sleep(500); // allow scroll animation to complete
 
-            // Find and click the accept button (adjust selector as needed)
-            WebElement acceptButton = driver.findElement(By.cssSelector("button.tarteaucitronAllow"));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", acceptButton);
-
-            // Wait for disclaimer to disappear
-            shortWait.until(ExpectedConditions.invisibilityOf(disclaimer));
-        } catch (TimeoutException e) {
-            // Disclaimer didn't appear, continue silently
+            // Try regular click
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            // Fallback to JS click
+            System.out.println("Click intercepted, using JavaScript click instead.");
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        } catch (Exception ex) {
+            System.out.println("Error clicking element: " + ex.getMessage());
         }
     }
+
+
+    public void handleCookieBanner(WebDriver driver, WebDriverWait wait) {
+        try {
+            // Wait up to 5s for the banner to appear (or skip if it doesn't)
+            List<WebElement> banners = driver.findElements(By.id("tarteaucitronAlertBig"));
+            if (!banners.isEmpty()) {
+                WebElement banner = banners.get(0);
+
+                if (banner.isDisplayed() || banner.getCssValue("opacity").equals("1")) {
+                    System.out.println("Cookie banner found. Trying to accept or hide...");
+
+                    // Try to click the accept button
+                    List<WebElement> acceptButtons = driver.findElements(By.id("tarteaucitronAllAllowed"));
+                    if (!acceptButtons.isEmpty()) {
+                        try {
+                            acceptButtons.get(0).click();
+                            wait.until(ExpectedConditions.invisibilityOf(banner));
+                            System.out.println("Accepted cookies, banner dismissed.");
+                        } catch (Exception e) {
+                            System.out.println("Accept button not clickable, using JS to hide the banner.");
+                            JavascriptExecutor js = (JavascriptExecutor) driver;
+                            js.executeScript("arguments[0].style.display='none';", banner);
+                        }
+                    } else {
+                        System.out.println("No accept button found, using JS to hide the banner.");
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+                        js.executeScript("arguments[0].style.display='none';", banner);
+                    }
+                } else {
+                    System.out.println("Banner exists but is not visible or blocking.");
+                }
+            } else {
+                System.out.println("No cookie banner found in DOM.");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error handling cookie banner: " + e.getMessage());
+        }
+    }
+
+
+
 
     public static void main(String[] args) {
         AltenJobCollector altenJobCollector = new AltenJobCollector();
@@ -125,13 +196,13 @@ public class AltenJobCollector {
         altenJobCollector.getJobsInformations();
         altenJobCollector.closeDriver();
 
-        DataToExcel dataToExcel = new DataToExcel();
-        dataToExcel.createWorkbook();
-        dataToExcel.applyBorderStyle();
-        dataToExcel.applyHeaderStyle();
-        dataToExcel.writeTableHeader();
-        dataToExcel.writeData("Alten", altenJobCollector.getId_jobInfo(), altenJobCollector.getJobsLinks(), altenJobCollector.getId_jobMissions(), altenJobCollector.getId_jobQualifications());
-
-        dataToExcel.saveWorkbook("C://Users//touhafi//Desktop//outputAlten.xlsx");
+//        DataToExcel dataToExcel = new DataToExcel();
+//        dataToExcel.createWorkbook();
+//        dataToExcel.applyBorderStyle();
+//        dataToExcel.applyHeaderStyle();
+//        dataToExcel.writeTableHeader();
+//        dataToExcel.writeData("Alten", altenJobCollector.getId_jobInfo(), altenJobCollector.getJobsLinks(), altenJobCollector.getId_jobMissions(), altenJobCollector.getId_jobQualifications());
+//
+//        dataToExcel.saveWorkbook("C://Users//touhafi//Desktop//outputAlten.xlsx");
     }
 }
