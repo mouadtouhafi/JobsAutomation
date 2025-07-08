@@ -1,9 +1,7 @@
 package collectjobs;
 
 import dataorganize.DataToExcel;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -57,6 +55,8 @@ public class AltenJobCollector {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         try {
+            // Handle cookie disclaimer before accessing any elements
+            dismissCookieDisclaimer();
 
             /*
              * Here, we access to the Domains block and collect the links of the
@@ -74,7 +74,7 @@ public class AltenJobCollector {
             for(WebElement element : listDomainDivs){
                 domainsLinks.add(element.getAttribute("href"));
             }
-            System.out.println(domainsLinks);
+//            System.out.println(domainsLinks);
 
 
             /*
@@ -84,6 +84,9 @@ public class AltenJobCollector {
 
             for(String link : domainsLinks){
                 driver.get(link);
+                // Dismiss cookie disclaimer on each new page
+                dismissCookieDisclaimer();
+
                 WebElement jobsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
                         By.cssSelector("div.container-md div.wp-block-bootstrap-tabs ul.nav.tabs__nav.d-none.d-md-flex")
                 ));
@@ -91,55 +94,28 @@ public class AltenJobCollector {
                 List<WebElement> listJobs = jobsSection.findElements(
                         By.tagName("a")
                 );
-
-                System.out.println("size : "+listJobs.size());
-                for(WebElement job : listJobs){
-                    String jobTitle = job.getText();
-                    String jobLink = listJobs.getFirst().getAttribute("href");
-
-                    List<String> infos = new ArrayList<>();
-                    infos.add(jobTitle);
-                    infos.add("MA");
-                    infos.add("N/A");
-                    infos.add("N/A");
-                    infos.add("N/A");
-                    id_jobInfo.put(job_id, infos);
-                    jobsLinks.put(job_id, jobLink);
-
-                    job_id++;
-                }
-
-                for(int i=0; i<jobsLinks.size(); i++){
-                    String jobLink = jobsLinks.get(i);
-                    driver.get(link);
-
-                    WebElement missionsList = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                            By.cssSelector("div.container-md div.wp-block-bootstrap-tabs div.tab-pane.fade.wp-block-bootstrap-tab-item.active.show ul")
-                    ));
-
-                    StringBuilder missions = new StringBuilder("'- ");
-                    List<WebElement> list_li = missionsList.findElements(By.tagName("li"));
-                    for(WebElement element : list_li){
-                        String str = element.getText();
-                        missions.append(str).append("- ");
-                    }
-                    id_jobMissions.put(i, missions);
-
-                    /* Job qualification must be empty because there is no qualification section
-                    *  in Alten website.
-                    * */
-                    StringBuilder qualifications = new StringBuilder("N/A");
-                    id_jobQualifications.put(i,qualifications);
-                }
-
-
             }
-            System.out.println(id_jobInfo);
-            System.out.println(jobsLinks);
-            System.out.println(id_jobMissions);
 
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void dismissCookieDisclaimer() {
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            WebElement disclaimer = shortWait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.id("tarteaucitronDisclaimerAlert")
+            ));
+
+            // Find and click the accept button (adjust selector as needed)
+            WebElement acceptButton = driver.findElement(By.cssSelector("button.tarteaucitronAllow"));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", acceptButton);
+
+            // Wait for disclaimer to disappear
+            shortWait.until(ExpectedConditions.invisibilityOf(disclaimer));
+        } catch (TimeoutException e) {
+            // Disclaimer didn't appear, continue silently
         }
     }
 
