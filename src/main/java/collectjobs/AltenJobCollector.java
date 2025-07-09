@@ -93,7 +93,6 @@ public class AltenJobCollector {
                 for(WebElement li : li_jobsList){
 
                     String jobTitle = li.getText();
-                    System.out.println(jobTitle);
                     safeClick(driver, li);
 
                     WebElement missionsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -101,45 +100,30 @@ public class AltenJobCollector {
                     ));
 
                     List<WebElement> li_elements = missionsSection.findElements(By.tagName("li"));
-                    for(int i=0; i<li_elements.size(); i++){
-                          System.out.println(li_elements.get(i).getText());
-//                        String missions = "";
-//                        List<WebElement> li_elements = div_elements.get(i).findElements(By.tagName("li"));
-//                        for(WebElement li_element : li_elements){
-//                            missions = missions + li_element.getText();
-//                        }
-//                        System.out.println("**********************************************************************************************   "+missions);
+                    StringBuilder missionStringBuilder = new StringBuilder();
+                    for (WebElement liElement : li_elements) {
+                        missionStringBuilder.append("- ").append(liElement.getText());
                     }
+
+                    List<String> infos = new ArrayList<>();
+                    infos.add(jobTitle);
+                    infos.add("MA");
+                    infos.add("N/A");
+                    infos.add("N/A");
+                    infos.add("N/A");
+                    id_jobInfo.put(job_id, infos);
+                    id_jobMissions.put(job_id, missionStringBuilder);
+                    id_jobQualifications.put(job_id, new StringBuilder("N/A"));
+                    job_id++;
                     Thread.sleep(1000);
+
+                    System.out.println(id_jobInfo);
+                    System.out.println(id_jobMissions);
+                    System.out.println(id_jobQualifications);
+                    System.out.println();
                 }
-
-
-
-
-
-
-
-//                WebElement jobsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
-//                        By.cssSelector("div.container-md div.tab-content")
-//                ));
-//                List<WebElement> a_elements = jobsSection.findElements(By.tagName("a"));
-//                List<WebElement> div_elements = jobsSection.findElements(By.tagName("div"));
-//                for(int i=0; i<a_elements.size(); i++){
-//
-//                    String jobTitle = "";
-//                    String hiddenJobTitle = (String) ((JavascriptExecutor) driver).executeScript(
-//                            "return arguments[0].textContent.trim();",
-//                            a_elements.get(i)
-//                    );
-//
-//                    String missions = "";
-//                    List<WebElement> li_elements = div_elements.get(i).findElements(By.tagName("li"));
-//                    for(WebElement li_element : li_elements){
-//                        missions = missions + li_element.getText();
-//                    }
-//                    System.out.println(missions);
-//                }
             }
+
 
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -169,7 +153,7 @@ public class AltenJobCollector {
             // Wait up to 5s for the banner to appear (or skip if it doesn't)
             List<WebElement> banners = driver.findElements(By.id("tarteaucitronAlertBig"));
             if (!banners.isEmpty()) {
-                WebElement banner = banners.get(0);
+                WebElement banner = banners.getFirst();
 
                 if (banner.isDisplayed() || banner.getCssValue("opacity").equals("1")) {
                     System.out.println("Cookie banner found. Trying to accept or hide...");
@@ -178,7 +162,7 @@ public class AltenJobCollector {
                     List<WebElement> acceptButtons = driver.findElements(By.id("tarteaucitronAllAllowed"));
                     if (!acceptButtons.isEmpty()) {
                         try {
-                            acceptButtons.get(0).click();
+                            acceptButtons.getFirst().click();
                             wait.until(ExpectedConditions.invisibilityOf(banner));
                             System.out.println("Accepted cookies, banner dismissed.");
                         } catch (Exception e) {
