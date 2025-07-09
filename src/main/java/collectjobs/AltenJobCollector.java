@@ -92,21 +92,23 @@ public class AltenJobCollector {
                 List<WebElement> li_jobsList = jobsSection.findElements(By.tagName("li"));
                 for(WebElement li : li_jobsList){
 
+                    String jobTitle = li.getText();
+                    System.out.println(jobTitle);
                     safeClick(driver, li);
 
-                    WebElement driver = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                        By.cssSelector("div.container-md div.tab-content")
-                    ));
-                    List<WebElement> div_elements = driver.findElements(By.tagName("div"));
-                    for(int i=0; i<div_elements.size(); i++){
-
-                        String missions = "";
-                        List<WebElement> li_elements = div_elements.get(i).findElements(By.tagName("li"));
-                        for(WebElement li_element : li_elements){
-                            missions = missions + li_element.getText();
-                        }
-                        System.out.println("**********************************************************************************************   "+missions);
-                    }
+//                    WebElement driver = wait.until(ExpectedConditions.visibilityOfElementLocated(
+//                        By.cssSelector("div.container-md div.tab-content")
+//                    ));
+//                    List<WebElement> div_elements = driver.findElements(By.tagName("div"));
+//                    for(int i=0; i<div_elements.size(); i++){
+//
+//                        String missions = "";
+//                        List<WebElement> li_elements = div_elements.get(i).findElements(By.tagName("li"));
+//                        for(WebElement li_element : li_elements){
+//                            missions = missions + li_element.getText();
+//                        }
+//                        System.out.println("**********************************************************************************************   "+missions);
+//                    }
                     Thread.sleep(1000);
                 }
 
