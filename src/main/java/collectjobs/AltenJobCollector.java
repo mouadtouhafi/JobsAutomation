@@ -96,19 +96,20 @@ public class AltenJobCollector {
                     System.out.println(jobTitle);
                     safeClick(driver, li);
 
-//                    WebElement driver = wait.until(ExpectedConditions.visibilityOfElementLocated(
-//                        By.cssSelector("div.container-md div.tab-content")
-//                    ));
-//                    List<WebElement> div_elements = driver.findElements(By.tagName("div"));
-//                    for(int i=0; i<div_elements.size(); i++){
-//
+                    WebElement missionsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                        By.cssSelector("div.container-md div.tab-content div.tab-pane.fade.wp-block-bootstrap-tab-item.show.active")
+                    ));
+
+                    List<WebElement> li_elements = missionsSection.findElements(By.tagName("li"));
+                    for(int i=0; i<li_elements.size(); i++){
+                          System.out.println(li_elements.get(i).getText());
 //                        String missions = "";
 //                        List<WebElement> li_elements = div_elements.get(i).findElements(By.tagName("li"));
 //                        for(WebElement li_element : li_elements){
 //                            missions = missions + li_element.getText();
 //                        }
 //                        System.out.println("**********************************************************************************************   "+missions);
-//                    }
+                    }
                     Thread.sleep(1000);
                 }
 
