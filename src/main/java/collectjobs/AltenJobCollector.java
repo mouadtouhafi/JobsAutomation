@@ -151,9 +151,11 @@ public class AltenJobCollector {
     }
 
 
+    /*
+    * Here, sometimes we get a cookie banner, to pass it we need to accept the cookies
+    * */
     public void handleCookieBanner(WebDriver driver, WebDriverWait wait) {
         try {
-            // Wait up to 5s for the banner to appear (or skip if it doesn't)
             List<WebElement> banners = driver.findElements(By.id("tarteaucitronAlertBig"));
             if (!banners.isEmpty()) {
                 WebElement banner = banners.getFirst();
@@ -161,7 +163,6 @@ public class AltenJobCollector {
                 if (banner.isDisplayed() || banner.getCssValue("opacity").equals("1")) {
                     System.out.println("Cookie banner found. Trying to accept or hide...");
 
-                    // Try to click the accept button
                     List<WebElement> acceptButtons = driver.findElements(By.id("tarteaucitronAllAllowed"));
                     if (!acceptButtons.isEmpty()) {
                         try {
