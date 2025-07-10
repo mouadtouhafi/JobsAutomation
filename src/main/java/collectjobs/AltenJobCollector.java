@@ -82,18 +82,19 @@ public class AltenJobCollector {
                 driver.get(link);
                 Thread.sleep(2000);
 
-
                 handleCookieBanner(driver, wait);
+
+                /* jobsSection Element contains list of jobs */
                 WebElement jobsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
                         By.cssSelector("div.container-md ul.nav.tabs__nav.d-none.d-md-flex")
                 ));
 
                 List<WebElement> li_jobsList = jobsSection.findElements(By.tagName("li"));
                 for(WebElement li : li_jobsList){
-
                     String jobTitle = li.getText();
                     safeClick(driver, li);
 
+                    /* missionsSection Element contains the list of lines in the missions section */
                     WebElement missionsSection = wait.until(ExpectedConditions.visibilityOfElementLocated(
                         By.cssSelector("div.container-md div.tab-content div.tab-pane.fade.wp-block-bootstrap-tab-item.show.active")
                     ));
