@@ -130,17 +130,20 @@ public class AltenJobCollector {
         }
     }
 
+    /*
+    * Sometimes the jobs section are not in the center of the page,
+    * this will result a problem because the element is in the html page
+    * but not clickable, to solve this we need to perform a scroll.
+    * */
     public void safeClick(WebDriver driver, WebElement element) {
         try {
-            // Scroll into view and click using JS to avoid overlays
             ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
-            Thread.sleep(500); // allow scroll animation to complete
-
-            // Try regular click
+            Thread.sleep(500);
             element.click();
         } catch (ElementClickInterceptedException e) {
-            // Fallback to JS click
             System.out.println("Click intercepted, using JavaScript click instead.");
+            /* If there is a problem in the scroll, we can't perform a click with Selenium
+            *  we click the element using javascript */
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
         } catch (Exception ex) {
             System.out.println("Error clicking element: " + ex.getMessage());
