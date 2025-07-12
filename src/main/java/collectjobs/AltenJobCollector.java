@@ -1,5 +1,6 @@
 package collectjobs;
 
+import dataorganize.DataToExcel;
 import org.openqa.selenium.*;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -114,6 +115,7 @@ public class AltenJobCollector {
                     id_jobInfo.put(job_id, infos);
                     id_jobMissions.put(job_id, missionStringBuilder);
                     id_jobQualifications.put(job_id, new StringBuilder("N/A"));
+                    jobsLinks.put(job_id, link);
                     job_id++;
                     Thread.sleep(1000);
 
@@ -162,7 +164,6 @@ public class AltenJobCollector {
 
                 if (banner.isDisplayed() || banner.getCssValue("opacity").equals("1")) {
                     System.out.println("Cookie banner found. Trying to accept or hide...");
-
                     List<WebElement> acceptButtons = driver.findElements(By.id("tarteaucitronAllAllowed"));
                     if (!acceptButtons.isEmpty()) {
                         try {
@@ -189,24 +190,5 @@ public class AltenJobCollector {
         } catch (Exception e) {
             System.out.println("Error handling cookie banner: " + e.getMessage());
         }
-    }
-
-
-
-
-    public static void main(String[] args) {
-        AltenJobCollector altenJobCollector = new AltenJobCollector();
-        altenJobCollector.setUpDriver();
-        altenJobCollector.getJobsInformations();
-        altenJobCollector.closeDriver();
-
-//        DataToExcel dataToExcel = new DataToExcel();
-//        dataToExcel.createWorkbook();
-//        dataToExcel.applyBorderStyle();
-//        dataToExcel.applyHeaderStyle();
-//        dataToExcel.writeTableHeader();
-//        dataToExcel.writeData("Alten", altenJobCollector.getId_jobInfo(), altenJobCollector.getJobsLinks(), altenJobCollector.getId_jobMissions(), altenJobCollector.getId_jobQualifications());
-//
-//        dataToExcel.saveWorkbook("C://Users//touhafi//Desktop//outputAlten.xlsx");
     }
 }
