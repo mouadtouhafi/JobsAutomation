@@ -35,7 +35,7 @@ public class ExecuteProgram {
         dataToExcel.applyHeaderStyle();
         dataToExcel.writeTableHeader();
         dataToExcel.writeData("Expleo", expleoJobCollector.getId_jobInfo(), expleoJobCollector.getJobsLinks(), expleoJobCollector.getId_jobMissions(), expleoJobCollector.getId_jobQualifications());
-
+        dataToExcel.writeData("Alten", altenJobCollector.getId_jobInfo(), altenJobCollector.getJobsLinks(), altenJobCollector.getId_jobMissions(), altenJobCollector.getId_jobQualifications());
 
 
         dataToExcel.saveWorkbook("C://Users//touhafi//Desktop//output.xlsx");
