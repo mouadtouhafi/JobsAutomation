@@ -46,12 +46,6 @@ Instead of manually navigating through job portals and copying content to Excel,
 
 ---
 
-## 📸 Demo Screenshots
-
-> _Coming soon: Screenshots of the running app and sample Excel output._
-
----
-
 ## 🚀 Getting Started
 
 ### ✅ Prerequisites
